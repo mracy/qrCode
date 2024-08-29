@@ -1,0 +1,33 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "99a92c86f9ccac2d1116486d3ea7c568"
+name = "qr-code-second"
+handle = "qr-code-second"
+application_url = "https://dis-gives-relative-neural.trycloudflare.com"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "quickstart-c89f3673.myshopify.com"
+include_config_on_deploy = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products"
+
+[auth]
+redirect_urls = [
+  "https://dis-gives-relative-neural.trycloudflare.com/auth/callback",
+  "https://dis-gives-relative-neural.trycloudflare.com/auth/shopify/callback",
+  "https://dis-gives-relative-neural.trycloudflare.com/api/auth/callback"
+]
+
+[webhooks]
+api_version = "2024-07"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app/uninstalled" ]
+  uri = "/webhooks"
+
+[pos]
+embedded = false
