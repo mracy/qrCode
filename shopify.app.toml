@@ -3,7 +3,7 @@
 client_id = "99a92c86f9ccac2d1116486d3ea7c568"
 name = "qr-code-second"
 handle = "qr-code-second"
-application_url = "https://dis-gives-relative-neural.trycloudflare.com"
+application_url = "https://reverse-without-creek-tutorial.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,9 +17,9 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://dis-gives-relative-neural.trycloudflare.com/auth/callback",
-  "https://dis-gives-relative-neural.trycloudflare.com/auth/shopify/callback",
-  "https://dis-gives-relative-neural.trycloudflare.com/api/auth/callback"
+  "https://reverse-without-creek-tutorial.trycloudflare.com/auth/callback",
+  "https://reverse-without-creek-tutorial.trycloudflare.com/auth/shopify/callback",
+  "https://reverse-without-creek-tutorial.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
