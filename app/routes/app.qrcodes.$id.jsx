@@ -52,14 +52,16 @@ export async function loader({ request, params }) {
       throw new Error("Invalid ID: ID must be a valid string.");
     }
 
-    console.log("Received ID:", id);
-
+  // I have printed replicaData here to find the issue
     return json(await getQRCode(id, admin.graphql));
   } catch (error) {
     console.error("Error in loader:", error);
     return json({ error: error.message }, { status: 400 });
   }
 }
+
+
+
 
 //perform the crud operation to post the data into web application
 export async function action({ request, params }) {
@@ -103,6 +105,8 @@ export default function QRCodeForm() {
   const [cleanFormState, setCleanFormState] = useState(qrCode);
   const isDirty = JSON.stringify(formState) !== JSON.stringify(cleanFormState);
 
+  //console.log("test",qrCode,"------------------",formState)
+
   const nav = useNavigation();
   const isSaving =
     nav.state === "submitting" && nav.formData?.get("action") !== "delete";
@@ -111,81 +115,86 @@ export default function QRCodeForm() {
 
   const navigate = useNavigate();
 
+
+
   //functions handle product selection and form submission in a React component
   async function selectProduct() {
-      // Retrieve the currently selected product ID and variant IDs from the form state
-      const selectedProductId = formState.productId;
-      const productVariantIds = Array.isArray(formState.productVariantId)
-        ? formState.productVariantId
-        : [formState.productVariantId]; // Convert to array if it's a string
+    // Retrieve the currently selected product ID and variant IDs from the form state
+    const selectedProductId = formState.productId;
+    const productVariantId = Array.isArray(formState.productVariantId)
+      ? formState.productVariantId
+      : [formState.productVariantId].filter(Boolean); // Convert to array if it's a string and remove empty
 
-      try {
-        // Open the Shopify resource picker
-        const { selection } = await window.shopify.resourcePicker({
-          type: "product",
-          action: "select",
-          variants: true, // Allow variant selection
-          selectionIds: selectedProductId
-            ? [
-                {
-                  id: selectedProductId,
-                  variants: productVariantIds.map(variantId => ({ id: variantId })),
-                }
-              ]
-            : [],
-        });
+    try {
+      // Open the Shopify resource picker
+      const { selection } = await window.shopify.resourcePicker({
+        type: "product",
+        action: "select",
+        variants: true, // Allow variant selection
+        selectionIds: selectedProductId
+          ? [
+              {
+                id: selectedProductId,
+                variants: productVariantId[0]
+                  ? productVariantId[0].split(',').map(variantId => ({ id: variantId }))
+                  : [],
+              },
+            ]
+          : [],
+      });
 
-        console.log("Selected products and variants:", selection);
+      console.log("Selected products and variants:", selection);
 
-        // If products were selected, update the form state
-        if (selection && selection.length > 0) {
-          const selectedProduct = selection[0];
-          const { images, id, title, handle, variants } = selectedProduct;
+      // If products were selected, update the form state
+      if (selection && selection.length > 0) {
+        const selectedProduct = selection[0];
+        const { images, id, title, handle, variants } = selectedProduct;
 
-          // Find the specific variant that was selected or use a default
-          const selectedVariants = variants.filter(variant =>
-            productVariantIds.includes(variant.id)
-          );
+        // Get all selected variant IDs or default to all if none were selected
+        const selectedVariantIds = variants
+          .filter((variant) => productVariantId.includes(variant.id))
+          .map((variant) => variant.id);
 
-          const selectedVariant = selectedVariants.length > 0
-            ? selectedVariants[0]
-            : (variants.length > 0 ? variants[0] : null);
+        // If no specific variants are selected, consider all variants
+        const allVariantIds = variants.map((variant) => variant.id);
 
-          // Update the form state with the selected product and variant details
-          setFormState({
-            ...formState,
-            productId: id,
-            productVariantId: variants.map(variants => variants.id),
-            productTitle: title,
-            productHandle: handle,
-            productAlt: images[0]?.altText || '',
-            productImage: images[0]?.originalSrc || '',
-            isSelected: true, // Mark the product as selected
-          });
+        // Ensure state updates correctly with the new values
+        setFormState((prevState) => ({
+          ...prevState,
+          productId: id,
+          productVariantId: selectedVariantIds.length > 0 ? selectedVariantIds : allVariantIds, // Use selected or all variants
+          productTitle: title,
+          productHandle: handle,
+          productAlt: images[0]?.altText || '',
+          productImage: images[0]?.originalSrc || '',
+          isSelected: true, // Mark the product as selected
+        }));
 
-          console.log(`Updated form state with product ID: ${id}`);
-          console.log(`Updated form state with variant ID: ${selectedVariant?.id || 'None'}`);
-        }
-      } catch (error) {
-        console.error('Error selecting product:', error);
+        console.log(`Updated form state with product ID: ${id}`);
+        console.log(`Updated form state with variant IDs: ${selectedVariantIds.join(", ")}`);
       }
+    } catch (error) {
+      console.error('Error selecting product:', error);
     }
+  }
 
-    const submit = useSubmit();
-    function handleSave() {
-      const data = {
-        title: formState.title,
-        productId: formState.productId || "",
-        productVariantId: formState.productVariantId || "",
-        productHandle: formState.productHandle || "",
-        destination: formState.destination,
-      };
+  const submit = useSubmit();
 
-      console.log("Submitting data:", data); // Add logging to check data
+  function handleSave() {
+    const data = {
+      title: formState.title,
+      productId: formState.productId || "",
+      productVariantId: Array.isArray(formState.productVariantId) ? formState.productVariantId : [], // Ensure it's an array
+      productHandle: formState.productHandle || [],
+      destination: formState.destination,
+    };
 
-      setCleanFormState({ ...formState });
-      submit(data, { method: "post" });
-    }
+    console.log("Submitting data:", data); // Add logging to check data
+
+    setCleanFormState({ ...formState });
+    submit(data, { method: "post" });
+  }
+
 
   //React component that renders a form for creating or editing QR codes and to build a user interface where users can input QR code details, select products, and view or download the generated QR code
 
@@ -343,6 +352,3 @@ export default function QRCodeForm() {
       </Page>
     );
   }
-
-
-
